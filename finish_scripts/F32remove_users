@@ -1,0 +1,80 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F32remove_users
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="remove non-essential users and groups"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+if [[ $# = 0 ]]
+then
+	USERS="gdm\
+		webservd\
+		nobody4"
+	print "  taking user list from hardcoded default"
+else
+	USERS="$@"
+	print "  taking user list from args"
+fi
+
+# Where we should look for crontabs
+
+CRONDIR="${ROOT}/var/spool/cron/crontabs"
+
+for user in $USERS
+do
+
+	# Build up a string which we can use as a sed command to strip the users
+	# out of passwd, shadow and group
+
+	SED_STR="${SED_STR}/^${user}:/d;"
+
+	# And while we're at it, remove any crontabs which may exits
+
+	if [[ -f "${CRONDIR}/$user" ]]
+	then
+		print -n "  removing crontab for $user: "
+		rm "${CRONDIR}/$user" \
+		&& print "ok" || print "failed"
+	fi
+
+done
+
+# Actually remove all the users and groups
+
+for file in passwd shadow group
+do
+	print -n "  clearing old users out of $file: "
+	cp "${ROOT}/etc/$file" "${ROOT}/etc/${file}.tmp"
+	sed -e "$SED_STR" "${ROOT}/etc/${file}.tmp" > \
+	"${ROOT}/etc/$file" 
+
+	if egrep -s "^root:" "${ROOT}/etc/$file" 
+	then
+		print "ok" 
+		rm "${ROOT}/etc/${file}.tmp"
+	else
+		print "failed"
+		ERR=1
+		cat "${ROOT}/etc/${file}.tmp" > "${ROOT}/etc/$file"
+	fi
+	
+done
+
+exit $ERR

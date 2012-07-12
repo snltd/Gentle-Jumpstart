@@ -1,0 +1,86 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F23defaultrouter
+# ----------------
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Disable services started by rcx.d scripts"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+for svc in \
+	S10lu \
+	S40llc2 \
+	S42ncakmod \
+	S47pppd \
+	S70uucp \
+	S71ldap.client \
+	S72autoinstall \
+	S72directory \
+	S72slpd \
+	S73cachefs.daemon \
+	S75savecore \
+	S76nscd \
+	S80kdmconfig \
+	S80lp \
+	S80spc \
+	S81ipp \
+	S85power \
+	S88sendmail \
+	S90wbem \
+	S93cacheos.finish \
+	S94ncalogd \
+	S95svm.sync \
+	S98fc-cache \
+	S99audit \
+	S99dtlogin \
+	S99rcapd
+do
+	if [[ -f ${ROOT}/etc/rc2.d/$svc ]]
+	then
+		print -n "    disabling $svc: "
+		mv ${ROOT}/etc/rc2.d/$svc ${ROOT}/etc/rc2.d/_$svc \
+			&& print "ok" \
+			|| print "FAILED"
+	fi
+
+done
+
+for svc in \
+	S14kdc \
+	S16boot.server \
+	S34dhcp \
+	S50apache \
+	S52imq \
+	S76snmpdx \
+	S77dmi \
+	S80mipagent \
+	S84appserv \
+	S90samba
+do
+
+	if [[ -f ${ROOT}/etc/rc3.d/$svc ]]
+	then
+		print -n "    disabling $svc: "
+		mv ${ROOT}/etc/rc3.d/$svc ${ROOT}/etc/rc3.d/_$svc \
+			&& print "ok" \
+			|| print "FAILED"
+
+	fi
+
+done

@@ -1,0 +1,45 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F23defaultrouter
+# ----------------
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Add a default route"
+NET_DIR="${SI_CONFIG_DIR}/networks/$NETWORK"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we have a network directory?
+
+if [[ -d $NET_DIR ]]
+then
+
+	if [[ -f ${NET_DIR}/defaultrouter ]]
+	then
+		print "  installing defaultrouter: "
+		cp ${NET_DIR}/defaultrouter ${ROOT}/etc/ \
+		&& print "ok" || print "failed"
+	else
+		print "  no defaultrouter found. Skipping."
+	fi
+
+else
+	print "  NOTICE: no network directory found [ $NET_DIR ]"
+fi
+

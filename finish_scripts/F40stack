@@ -1,0 +1,43 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F40stack
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Stop the execution of code on the user stack"
+SYSTEM="${ROOT}/etc/system"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+[[ -f "$SYSTEM" ]] || warn "no system file [ $SYSTEM ]"
+
+print -n "  updating ${SYSTEM}: "
+
+cat <<-EOSYSTEM >> $SYSTEM
+
+	* begin user stack execution restrictions
+
+	set noexec_user_stack = 1
+	set noexec_user_stack_log = 1
+
+	* end user stack execution restrictions 
+
+EOSYSTEM
+
+egrep -s "noexec_user_stack = 1" $SYSTEM && print "ok" || exit $?
+

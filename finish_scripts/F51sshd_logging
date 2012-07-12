@@ -1,0 +1,73 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F51sshd_logging
+#
+# Set up SSH logging.
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Set up SSH logging and rotation"
+SYSLOG_CONF="${ROOT}/etc/syslog.conf"
+SSHD_CONF="${ROOT}/etc/ssh/sshd_config"
+LOGADM_CONF="${ROOT}/etc/logadm.conf"
+ARCHIVE="/var/log/archive"
+LOG_FILE="/var/log/sshd.log"
+LOCAL_FAC="1" # syslog facility to log to
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we even have SSH installed?
+
+[[ -f $SSHD_CONF ]] || { print "SSH not installed"; exit 0; }
+
+# Change the syslog facility
+
+print -n "  making SSHD log through syslog LOCAL${LOCAL_FAC}: "
+cp $SSHD_CONF ${SSHD_CONF}.orig
+sed "s/ auth$/ local${LOCAL_FAC}/" ${SSHD_CONF}.orig > $SSHD_CONF \
+&& print "ok" || print "failed"
+rm ${SSHD_CONF}.orig
+
+# Tell syslog what to expect
+
+print -n "  updating syslog.conf: "
+print "local${LOCAL_FAC}.info					$LOG_FILE" >> $SYSLOG_CONF \
+&& print "ok" || print "failed"
+
+# Set up log rotation
+# Rotate sshd log every month and compress. Keep 3 months' worth
+
+print -n "  updating logadm.conf: "
+cat <<-EOLOGADM >> $LOGADM_CONF && print "ok" || print "failed"
+
+	# Rotate sshd log every month and compress. Keep 3 months' worth
+
+	$LOG_FILE -A 3m -a 'pkill -HUP syslogd' -p 1m -t \
+	'$ARCHIVE/\$basename.%Y-%m-%d' -z1
+
+EOLOGADM
+
+touch ${ROOT}/var/log/sshd.log
+
+# Make archive directory
+
+print -n "  creating archive directory: "
+mkdir -p ${ROOT}/$ARCHIVE && print "ok" || print "failed"
+print -n "  setting archive permissions: "
+chmod 0700 ${ROOT}/$ARCHIVE && print "ok" || print "failed"
+

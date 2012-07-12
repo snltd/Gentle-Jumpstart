@@ -1,0 +1,64 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F43disable_svc
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+#[[ -z $IN_CONTROL ]] && \
+#{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="disable unwanted SMF services"
+SCR="${ROOT}/etc/rc3.d/S99smf"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+if [[ ! -d ${ROOT}/var/svc ]]
+then
+	print "client does not support SMF"
+	exit 1
+fi
+
+print -n "  installing SMF control file: "
+
+cat <<-\EOSYSTEM >$SCR
+	#!/bin/ksh
+
+	svccfg apply /var/svc/profile/generic_limited_net.xml
+
+	for svc in \
+		svc:/system/power:default \
+		svc:/application/management/wbem:default \
+		svc:/application/font/stfsloader:default \
+		svc:/network/rpc/cde-ttdbserver:tcp \
+		svc:/network/rpc/cde-calendar-manager:default \
+		svc:/system/filesystem/volfs:default \
+		svc:/network/sendmail-client:default \
+		svc:/network/smtp:sendmail \
+		svc:/application/font/fc-cache:default \
+		svc:/system/webconsole:console \
+		svc:/application/cde-printinfo:default \
+		svc:/application/graphical-login/cde-login:default \
+		svc:/application/stosreg:default \
+		svc:/system/basicreg:default \
+		svc:/application/autoreg:default
+		do
+			svcadm disable $svc
+		done
+
+		rm $0
+EOSYSTEM
+
+chmod 0744 $SCR && print "ok" || exit $?
+

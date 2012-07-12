@@ -1,0 +1,112 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F81install_packages
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="install additional software packages"
+PKG_LIST="${CONF_DIR}/software"
+PKG_DIR="${SI_CONFIG_DIR}/packages/$(uname -p)"
+OSPKG_DIR="${PKG_DIR}/$(uname -r)"
+CMN_PKG_DIR="${PKG_DIR}/common"
+RESP_DIR="${PKG_DIR}/response_files"
+EXIT=0
+
+#-----------------------------------------------------------------------------
+# FUNCTIONS
+
+function install_pkg
+{
+
+	# Nice little function to tidily install a package. Most of the
+	# variables are global. Arguments are:
+	# $1 is the package name
+	# $2 is the source directory
+	
+	pkg_name=$1
+	pkg_dir=$2
+
+	# do we have a response file for this package?
+
+	[[ -f "${RESP_DIR}/${pkg_name}.response" ]] \
+	&& RESPONSE="-r ${RESP_DIR}/${pkg_name}.response"
+
+	# do we have a noask_pkgadd file?
+
+	[[ -f "${RESP_DIR}/noask_pkgadd" ]] \
+	&& NOASK="-a ${RESP_DIR}/noask_pkgadd"
+
+	# install the package and report on the progress
+
+	print -n "  installing $pkg_name: "
+	
+	if pkgadd -n \
+		-R ${ROOT} \
+		$NOASK \
+		$RESPONSE \
+ 		-d $pkg_dir $pkg_name 
+	then
+		print "ok"
+	else
+		print "failed"
+		EXIT=$(($EXIT + 1))
+	fi
+
+}
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+if [[ ! -f "$PKG_LIST" ]]
+then
+	print "  ERROR: no client software file found [ $PKG_LIST ]: exiting"
+	exit 100
+fi
+
+if [[ ! -d "$OSPKG_DIR" ]]
+then
+	print "  ERROR: no directory $OSPKG_DIR: exiting"
+	exit 101
+fi
+
+if [[ ! -d "$CMN_PKG_DIR" ]]
+then
+	print "  WARNING: no common directory $CMN_PKG_DIR"
+fi
+
+#for PKG in `grep -v "^#" $PKG_LIST` # why the hell doesn't this work?
+for PKG in `cat $PKG_LIST | grep -v "^#" | cut -d: -f1` # this weeks unnecessary use of cat
+do
+	# Check for the package in the version specific directory. Do this by
+	# looking for the pkginfo file rather than just a directory name. If it
+	# looks like we have it then call the function we defined earlier to do
+	# the installation
+
+	if [[ -f "${OSPKG_DIR}/$PKG/pkginfo" ]]
+	then
+		install_pkg $PKG $OSPKG_DIR
+	elif [[ -f "${CMN_PKG_DIR}/$PKG/pkginfo" ]]
+	then
+		install_pkg $PKG $CMN_PKG_DIR
+	else
+		print "  ERROR: can't find package $PKG"
+		EXIT=$(($EXIT + 1))
+	fi
+
+done
+
+exit $EXIT

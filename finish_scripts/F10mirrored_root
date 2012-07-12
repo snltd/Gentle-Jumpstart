@@ -1,0 +1,33 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F10mirrored_root
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="set md_mirrored_root in /etc/system"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# We'll only bother running if we think we've got mirrored disks
+
+metadb >/dev/null 2>&1 || { print "disks are not mirrored"; exit 0; }
+
+print -n "  updating system file: "
+print "\nset md:mirrored_root_flag = 1" >> $ROOT/etc/system \
+&& print "ok" || print "failed"
+

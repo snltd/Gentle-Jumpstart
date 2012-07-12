@@ -1,0 +1,39 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F42encryption_strength
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Increase strength of default encryption algorithm"
+POLICY="${ROOT}/etc/security/policy.conf"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+if [[ -f $POLICY ]]
+then
+	print -n "  upping strength of encryption: "
+	
+	cp $POLICY "${POLICY}.tmp" && \
+	sed -e '/^CRYPT_DEFAULT/s/__unix__/md5/' "${POLICY}.tmp" > $POLICY \
+	&& print "ok" || print "failed"
+	
+	rm -f "${POLICY}.tmp"
+else
+	print "  ERROR: no policy file [ $POLICY ]"
+	exit 1
+fi
+

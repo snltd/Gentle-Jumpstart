@@ -1,0 +1,46 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F21ntp_client
+# -------------
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Set up the machine as an NTP client"
+NET_DIR="${SI_CONFIG_DIR}/networks/$NETWORK"
+NTP_CONF="${NET_DIR}/ntp.conf"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we have a network directory?
+
+if [[ -d $NET_DIR ]]
+then
+
+	if [[ -f $NTP_CONF ]]
+	then
+		print "  installing ${NTP_CONF}: "
+		cp $NTP_CONF ${ROOT}/etc/inet/ \
+		&& print "ok" || print "failed"
+	else
+		print "  NOTICE: no $NTP_CONF found"
+	fi
+
+else
+	print "  NOTICE: no network directory found [ $NET_DIR ]"
+fi
+

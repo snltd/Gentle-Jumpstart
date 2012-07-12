@@ -1,0 +1,64 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F30inetd
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Remove unwanted services from inetd.conf"
+INETD="${ROOT}/etc/inetd.conf"
+
+if [[ $# == 0 ]]
+then
+	LIST="ftp\
+		telnet"
+	print "  taking service list from hardcoded default"
+else
+	LIST="$@"
+	print "  taking service list from args"
+fi
+
+if [ ! -f $INETD ]
+then
+	print "  ERROR: no file $INETD"
+	exit 1
+fi
+
+print -n "  disabling all inetd services: "
+
+sed -e 's/^[^#].*/#&/'  $INETD > "${INETD}.old" \
+	&& print "ok" || print "FAILED"
+
+for svc in $LIST
+do
+	print -n "  re-enabling $svc: "
+	
+	if grep "^#$svc" "${INETD}.old" > /dev/null 2>&1
+	then
+		SED_STR="${SED_STR}/^#${svc}/s/^#//;"
+		print "ok"
+	else
+		print "not found"
+	fi
+
+done
+
+print -n "  rewriting inetd.conf: "
+
+sed -e "$SED_STR" "${INETD}.old" > $INETD \
+	&& print "ok" || print "FAILED"
+
+

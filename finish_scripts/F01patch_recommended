@@ -1,0 +1,67 @@
+#!/bin/ksh
+
+ROOT=/a
+#=============================================================================
+#
+# F15patch_misc
+#
+# v1.0 - log any changes below here
+# if $1 is "nobackout", patches cannot be backed out
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Applies miscellaneous patches"
+PATCH_DIR="${SI_CONFIG_DIR}/patches/${SOL_VER}/misc"
+GLOBAL_BLACKLIST="${JSFS}/patches/${SOL_VER}_blacklist"
+CLIENT_BLACKLIST="${CONF_DIR}/patch_blacklist"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we have the patch directory?
+
+[[ -d $PATCH_DIR ]] \
+|| die "cannot find miscellaneous patch directory [ $PATCH_DIR ]"
+
+[[ x$1 == xnobackout ]] && OPT="-d"
+
+# Install patches in chronological order. This seems to be the safest way of
+# satisfying dependencies
+
+ls -rt $PATCH_DIR | while read patch
+do
+
+	# Make sure what we're going to apply looks like a patch
+
+	[[ -f "${PATCH_DIR}/${patch}/patchinfo" ]] || continue
+
+	# Patches can be blacklisted. Is this on the blacklist?
+
+	if [[ -f $GLOBAL_BLACKLIST ]]
+	then
+		egrep -s ^${patch} $GLOBAL_BLACKLIST && \
+		{ print "  patch $patch is blacklisted globally - skipping"; \
+		continue; }
+	fi
+
+	if [[ -f $CLIENT_BLACKLIST ]]
+	then
+		egrep -s ^${patch} $CLIENT_BLACKLIST && \
+		{ print "  patch $patch is blacklisted for client - skipping"; \
+		continue; }
+	fi
+
+	print -n "  installing patch ${patch}: "
+	patchadd $OPT -R $ROOT $PATCH_DIR/$patch \
+	&& ok || print "failed [ $? ]"
+done 2>/dev/null
+

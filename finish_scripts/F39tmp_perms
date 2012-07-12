@@ -1,0 +1,48 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F39tmp_perms
+# ------------
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Install script to keep proper permissions on /tmp"
+STICKYFILE="${ROOT}/etc/rc3.d/S79tmpfix"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+
+print -n "  installing /tmp management file: "
+
+cat <<-EOSCR >$STICKYFILE
+	#!/bin/sh
+
+	/usr/bin/chmod 1777 /tmp
+	/usr/bin/chown root:sys /tmp
+
+EOSCR
+
+if egrep -s /usr/bin/chmod $STICKYFILE
+then
+        print -n "ok\n  setting permissions: "
+        chown root:sys $STICKYFILE && \
+        chmod 744 $STICKYFILE \
+        && print "ok" || print "failed"
+else
+        print "failed"
+		exit 2
+fi
+

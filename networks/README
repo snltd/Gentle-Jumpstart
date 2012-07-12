@@ -1,0 +1,6 @@
+In this directory, create a subdirectory for each of your networks. For
+instance, 192.168.1.0. Inside that directory you can create files such as
+defaultrouter, netmasks, nsswitch.conf, ntp.conf and resolv.conf, which will
+be picked up by the relevant finish scripts. You can have as many networks
+as you like.
+

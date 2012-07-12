@@ -1,0 +1,45 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F38loginlog
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="create a file to record failed logins"
+LF="${ROOT}/var/adm/loginlog"
+MF="${ROOT}/var/adm/messages" 
+
+#-----------------------------------------------------------------------------
+
+mkdir -p  "${ROOT}/var/adm"
+
+print -n "  creating loginlog: "
+touch $LF \
+&& print "ok" || { print ERR=1; "failed"; }
+
+print -n "  creating messages: "
+touch $MF \
+&& print "ok" || { print ERR=1; "failed"; }
+
+print -n "  setting permissions: "
+chown root:sys $LF $MF \
+&& print "ok" || { print ERR=1; "failed"; }
+
+print -n "  setting ownership: "
+chmod 600 $LF $MF \
+&& print "ok" || { print ERR=1; "failed"; }
+
+exit $ERR

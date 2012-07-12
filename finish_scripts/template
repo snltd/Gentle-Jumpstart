@@ -1,0 +1,24 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# 
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC=""
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+

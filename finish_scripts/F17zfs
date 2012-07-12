@@ -1,0 +1,79 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F17zfs
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+#[[ -z $IN_CONTROL ]] && \
+#{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC=""
+OSVER=$(uname -r)
+ZPOOL=${CONF_DIR}/zpools
+ZFS=${CONF_DIR}/zfs
+
+ZPOOL=$HOME/zpool
+ZFS=$HOME/zfs
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we have any ZFS config files for this client? We need *at least* a
+# zpool.
+
+[[ -f $ZPOOL ]] || { print "no zpool configuration"; exit 0; }
+
+# We may have a zpool file, but are we likely to have ZFS on this system?
+# Not if it's older than Solaris 10.
+
+[[ ${OSVER#5.} -lt 10 ]] && print "too old"
+
+# We can probably create a zpool then. How is it described? The zpool config
+# file should define zpools as you pass them to the zpool command
+
+grep -v "^[ 	]#" $ZPOOL | while read zpool
+do
+	echo "creating zpool ${zpool%% *}. Watch below for errors."
+	zpool create $zpool
+done
+
+# Now check for ZFS filesystems. These are defined with the name as the
+# first field, then option= on the rest of the line. Basic, but it's good
+# enough for me.
+
+[[ -f $ZFS ]] || { print "no ZFS configuration"; exit 0; }
+
+grep -v "^[ 	]#" $ZFS | while read zfs
+do
+	fs=${zfs%% *}
+	
+	# we can't create a ZFS filesystem if its parents don't exist, and as
+	# yet there isn't anything analagous to mkdir -p for ZFS namepsaces
+
+	# Does the pool exist?
+
+	if ! zpool list -H -o name | egrep -s ^${fs%%/*}$
+	then
+		# yes. Does the parent?
+
+		print "creating $fs"
+			parent=${fs%/*}
+		zfs list -H -o name -t filesystem | egrep -s "^$parent$" && print "  got parent"
+		cat ~/dummy_list | egrep -s "^$parent$" && print "  got parent"
+	else
+		print "pool does not exist [ ${fs%%/*} ]"
+		continue
+	fi
+
+done

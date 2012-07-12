@@ -1,0 +1,39 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F25auto_home
+# ------------
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Use autofs for home directories"
+NET_DIR="${SI_CONFIG_DIR}/networks/$NETWORK"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we have a network directory?
+
+
+if [[ -f ${NET_DIR}/auto_home ]]
+then
+	print -n "  installing auto_home: "
+
+	cp ${NET_DIR}/auto_home ${ROOT}/etc && print "ok" || print "failed"
+else
+	print "  no auto_home file found. Skipping."
+fi
+
+

@@ -1,0 +1,49 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F20dns_client
+# -------------
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="Configure this machine as a DNS client"
+NET_DIR="${SI_CONFIG_DIR}/networks/$NETWORK"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# Do we have a network directory?
+
+if [[ -d $NET_DIR ]]
+then
+	for file in resolv.conf nsswitch.conf
+	do
+
+		if [[ -f ${NET_DIR}/$file ]]
+		then
+			print "  installing ${file}: "
+			cp ${NET_DIR}/$file ${ROOT}/etc \
+			&& print "ok" || print "failed"
+		else
+			print "  no $file found. Skipping."
+		fi
+
+	done
+
+else
+	print "  NOTICE: no network directory found [ $NET_DIR ]"
+fi
+

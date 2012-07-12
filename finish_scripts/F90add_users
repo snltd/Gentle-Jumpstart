@@ -1,0 +1,87 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F99dummy
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+SCR_DESC="adds  users"
+PWFILE="${ROOT}/etc/passwd"
+SHFILE="${ROOT}/etc/shadow"
+SRC="${CONF_DIR}/users"
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+# We pull the user out of a file in the client config directory. They're in
+# there just like an old-skool SunOS passwd file. i.e. the encrypted
+# password is in the second field
+
+[[ -f $SRC ]] || { print "No users to add"; exit 0; }
+
+grep "^[a-z]" $SRC | while read user
+do
+	USER=$(print $user | cut -d: -f1)
+	PASSWD=$(print $user | cut -d: -f2)
+	UID=$(print $user | cut -d: -f3)
+	GID=$(print $user | cut -d: -f4)
+	GCOS=$(print $user | cut -d: -f5)
+	UDIR=$(print $user | cut -d: -f6)
+	USHELL=$(print $user | cut -d: -f7)
+
+	# Now we know enough to add the user. 
+
+	print -n "  adding user $USER to passwd file: "
+	print "${USER}:x:${UID}:${GID}:${GCOS}:${UDIR}:$USHELL" >> $PWFILE \
+	&& print "ok" || print "failed"
+
+	# Update the shadow file
+
+	print -n "  adding user $USER to shadow file: "
+	print "$USER:$PASSWD:6445::::::" >> $SHFILE \
+	&& print "ok" || print "failed"
+
+	# Create a home directory
+
+	print -n "  creating home directory [$UDIR]: "
+	mkdir -p "${ROOT}/$UDIR" > /dev/null 2>&1  && print "ok" || print "failed"
+
+	print -n "  installing .profile: "
+
+	if [[ -f "${CONF_DIR}/sh_profile" ]]
+	then
+		cp "${CONF_DIR}/sh_profile" ${ROOT}/${UDIR}/.profile \
+		&& print "installed from file" || print "failed to install from file"
+	else
+		cat 2>/dev/null > ${ROOT}/${UDIR}/.profile <<-EOPROFILE \
+		&& print "ok" || print "failed"
+			PATH=/usr/bin:/usr/sbin:/sbin:\
+			/usr/local/bin:\
+			/usr/sadm/bin:\
+
+			set -o vi
+
+			HISTSIZE=5000
+
+			EDITOR=vi
+			PS1="[`uname -n`:\$PWD]$ "
+			PATH=$PATH:${HOME}/bin:/usr/ucb:.
+		EOPROFILE
+	fi
+
+	print -n "  setting home directory permissions: "
+	chown $UID:$GID "${ROOT}/$UDIR"  && print "ok" || print "failed"
+done

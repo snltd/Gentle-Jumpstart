@@ -1,0 +1,35 @@
+#!/bin/ksh
+
+#=============================================================================
+#
+# F80tree_copy
+#
+# v1.0 - log any changes below here
+#
+#=============================================================================
+
+# Preliminary check. We depend on variables being set by finish_master.sh.
+# If we're not under its control, don't run or who knows what might happen.
+#
+
+[[ -z $IN_CONTROL ]] && \
+{ print "This script should only be run by finish_master.sh"; exit 255; }
+
+#-----------------------------------------------------------------------------
+# VARIABLES
+
+TREE_ROOT="$CONF_DIR/root"
+SCR_DESC="Install files that aren't in packages."
+
+#-----------------------------------------------------------------------------
+# SCRIPT STARTS HERE
+
+if [[ -d $TREE_ROOT ]] 
+then
+	print "installing files from $TREE_ROOT: "
+	tar -cf $TREE_ROOT | ( cd $ROOT; tar -xf - )
+	exit $?
+else
+	print "no files to install"
+fi
+
