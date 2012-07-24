@@ -89,7 +89,7 @@ ADD_PKG_Solaris_10="SUNWsshcu SUNWsshdr SUNWsshdu SUNWsshr SUNWsshu SUNWuiu8
 #-----------------------------------------------------------------------------
 # FUNCTIONS
 
-function die
+die()
 {
 	# Error handling
 
@@ -97,15 +97,16 @@ function die
 	exit ${2:-1}
 }
 
-function usage
+usage()
 {
 	cat <<-EOUSAGE
-	  ${0##*/} [-m cxtxdx:cytydy] [-f list] [-R cxtxdx] [-a arch]  [-S size]
+
+	${0##*/} [-m cxtxdx:cytydy] [-f list] [-R cxtxdx] [-a arch]  [-S size]
 	          [-c cluster] [-psu] [-F archive] <directory> <client>
 
 	where:
 	    -a  : set client architecture (is guessed otherwise)
-	    -c  : Solaris install cluster (e.g. SUNCuser)
+	    -c  : Solaris install cluster (default is $CLUSTER)
 	    -f  : list of finish scripts to run, comma separated. Can also 
 	          be "all" or "none". If not supplied, any existing finish
 	          script configuration for this client will be re-used
@@ -116,8 +117,8 @@ function usage
 	          Normally "existing" slices are used
 	    -R  : set client boot disk (e.g. c0t0d0)
 	    -z  : use ZFS root
-		-S  : size of ZFS root pool in GB (all disk if not supplied)
-		-T  : if using ZFS root, swap size in GB (auto if not supplied)
+	    -S  : size of ZFS root pool in GB (all disk if not supplied)
+	    -T  : if using ZFS root, swap size in GB (auto if not supplied)
 	    -m  : install Solaris mirrored on the named disks (Sol 9 and later)
 	    -p  : force creation of new client profile file
 	    -s  : force creation of new client sysidcfg file
@@ -148,7 +149,7 @@ apply_netmask()
 
 # NB -- the following make_ functions have the same interface.
 
-function make_profile
+make_profile()
 {
 	# Here we build a default profile. This won't work for all machines --
 	# for a start c0 is often the DVD drive. So, you should create a profile
@@ -283,7 +284,7 @@ function make_profile
 	fi >>$PROF
 }
 
-function make_sysidcfg
+make_sysidcfg()
 {
 	# This function creates a default sysidcfg file for the client machine.
 	# Sun keep changing the requirements of sysidcfg, so we have a different
@@ -395,7 +396,7 @@ function make_sysidcfg
 	esac
 }
 
-function make_finish
+make_finish()
 {
 	# Create a finish script. Normally this will just run our master.sh
 
@@ -483,6 +484,9 @@ do
 		R)	ROOTDEV=$OPTARG
 			;;
 
+		s)	FORCE_SYSIDCFG=true
+			;;
+
 		S)	RPOOLSIZE=$OPTARG
 			;;
 
@@ -490,9 +494,6 @@ do
 			;;
 
 		u)	FORCE_UPDATE=true
-			;;
-
-		s)	FORCE_SYSIDCFG=true
 			;;
 
 		z)	USE_ZFS=true
@@ -510,7 +511,7 @@ shift $(( $OPTIND -1 ))
 
 [[ $# == 2 ]] || usage
 
-# Can't do FLAR upgrades right now
+# Can't do FLAR upgrades yet.
 
 [[ -n $FORCE_UPDATE && -n $FLAR ]] \
 	&& die "-u and -F options are mutually exclusive."
@@ -664,7 +665,6 @@ EOZINFO
 	&& print "    boot disk mirror : $MIRROR_DISKS" \
 	|| print "           boot disk : $ROOTDEV"
 
-
 # If we've been given a list of finish scripts, look to see if they exist
 
 if [[ -n $FINISH_LIST ]]
@@ -747,7 +747,6 @@ else
 	rm $AIC_OUT
 	exit 3
 fi
-
 
 # Normally we'd check the rules here, but if you're on an OpenSolaris
 # variant, that won't work. So we hack it by simply adding our rule to
