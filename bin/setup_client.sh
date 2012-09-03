@@ -31,12 +31,21 @@
 # v2.3 Add packages though ADD_PKG variables. Different install clusters
 #      with -c. Better ZFS support. 
 #
+# v2.4 Added Solaris 2.5.1 supprt. No, I'm not joking. And it works. RDF
+#      03/09/2012.
+#
 # R Fisher 
 #
 #=============================================================================
 
 #-----------------------------------------------------------------------------
 # VARIABLES
+
+PATH=/usr/bin:/usr/sbin
+	# Always set your PATH
+
+MY_VER="2.4"
+	# Version of program
 
 JS_DIR="/js/export"
 	# Base of our Jumpstart installation
@@ -102,7 +111,7 @@ usage()
 	cat <<-EOUSAGE
 
 	${0##*/} [-m cxtxdx:cytydy] [-f list] [-R cxtxdx] [-a arch]  [-S size]
-	          [-c cluster] [-psu] [-F archive] <directory> <client>
+	          [-c cluster] [-psuV] [-F archive] <directory> <client>
 
 	where:
 	    -a  : set client architecture (is guessed otherwise)
@@ -123,6 +132,7 @@ usage()
 	    -p  : force creation of new client profile file
 	    -s  : force creation of new client sysidcfg file
 	    -u  : set up "update" profile
+		-V  : print version of program
  
 	EOUSAGE
 	exit 2
@@ -633,12 +643,26 @@ mkdir -p $CONF_DIR \
 
 # Find the relevant Solaris image Tools directory. I think I've run into
 # trouble using one version's add_install_client with another version's
-# image
+# image. Solaris 2.5.1 doesn't have a Tools directory, and its
+# add_install_client doesn't have the -p flag. It also doesn't automatically
+# share the boot directory, so we'll do that ourselves.
 
 TOOLS_DIR="${IMG_DIR}/${SOL_VER}/Tools"
+CONF_FLAG="-p"
 
-[[ -d $TOOLS_DIR ]] \
-	|| die "no Tools directory [$TOOLS_DIR]"
+if [[ ! -d $TOOLS_DIR ]]
+then
+
+	if [[ -f ${TOOLS_DIR%/Solaris*}/add_install_client ]]
+	then
+		TOOLS_DIR=${TOOLS_DIR%/Solaris*}
+		CONF_FLAG="-s"
+		share -oro,anon=0 $IMG_DIR
+	else
+		die "no Tools directory [$TOOLS_DIR]"
+	fi
+
+fi
 
 [[ -n $USE_ZFS ]] && RFS=Z || RFS=U
 cat <<-EOINFO
@@ -730,7 +754,7 @@ cd $TOOLS_DIR \
 AIC_OUT="/tmp/aic_out.$$"
 AIC_CMD="./add_install_client \
 	$EXTRAS \
-	-p ${SERVER_IP}:$CONF_DIR \
+	$CONF_FLAG ${SERVER_IP}:$CONF_DIR \
 	-c ${SERVER_IP}:$JS_DIR \
 	$CLIENT $ARCH"
 
