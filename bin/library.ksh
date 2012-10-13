@@ -11,7 +11,7 @@
 #-----------------------------------------------------------------------------
 # VARIABLES
 
-LIB_VER="0.0a"
+LIB_VER="2.0"
 
 #-----------------------------------------------------------------------------
 # EXIT FUNCTIONS
@@ -85,8 +85,8 @@ function generic_info
 	# just print information about the parent script
 
 	cat <<-EOINFO
-	  script version: $MY_VER
-	  library version: $LIB_VER
+	 script version: $MY_VER
+	library version: $LIB_VER
 	EOINFO
 }
 

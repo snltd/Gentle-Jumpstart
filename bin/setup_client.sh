@@ -124,7 +124,7 @@ usage()
 	          supplied in <directory> as is in archive
 	    -E  : force explicit partitioning for flash archive installation.
 	          Normally "existing" slices are used
-	    -R  : set client boot disk (e.g. c0t0d0)
+	    -R  : set client boot disk. (Default is $ROOTDEV.)
 	    -z  : use ZFS root
 	    -S  : size of ZFS root pool in GB (all disk if not supplied)
 	    -T  : if using ZFS root, swap size in GB (auto if not supplied)
@@ -132,7 +132,7 @@ usage()
 	    -p  : force creation of new client profile file
 	    -s  : force creation of new client sysidcfg file
 	    -u  : set up "update" profile
-		-V  : print version of program
+	    -V  : print version of program
  
 	EOUSAGE
 	exit 2
@@ -383,6 +383,11 @@ make_sysidcfg()
 			;;
 
 		Solaris_11)
+			
+			# Yes, I know you can't Jumpstart Solaris 11, but you could
+			# Jumpstart Solaris Nevada, which was the original (and best)
+			# 5.11.
+
 			cat <<-EOSYSIDCFG >$2/sysidcfg
 				system_locale=en_GB
 				timezone=GB
@@ -464,7 +469,7 @@ make_finish()
  
 # Get options
 
-while getopts "a:c:Ef:F:m:npR:sS:T:uz" option 2>/dev/null
+while getopts "a:c:Ef:F:m:npR:sS:T:uVz" option 2>/dev/null
 do
 
 	case $option in 
@@ -504,6 +509,10 @@ do
 			;;
 
 		u)	FORCE_UPDATE=true
+			;;
+		
+		V)	print $MY_VER
+			exit 0
 			;;
 
 		z)	USE_ZFS=true

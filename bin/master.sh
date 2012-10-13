@@ -32,7 +32,7 @@ set -A SCR_ARR
 	# temp name) and partly for neatness. I hate accessing the filesystem
 	# unless I have to.
 
-MY_VER="0.1"
+MY_VER="2.0"
 SUN_VER=$(uname -r)
 SOL_VER=${SUN_VER#5.}
 

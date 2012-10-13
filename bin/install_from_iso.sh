@@ -75,7 +75,7 @@ MY_VER="2.0"
 #-----------------------------------------------------------------------------
 # FUNCTIONS
 
-function usage
+usage()
 {
 	# How to use the script
 
