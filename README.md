@@ -13,3 +13,5 @@ for a few years now, so they're pretty battle-hardened.
 
 Though this lacks some of the more advanced features of JET, I think it's a
 lot quicker to learn, and faster and simpler to use.
+
+Documentation is in the wiki.
