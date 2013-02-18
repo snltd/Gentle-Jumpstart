@@ -386,6 +386,7 @@ do
 	elif [[ $iname == *x86* ]]
 	then
 		ARCH="x86"
+		PARCH=$ARCH
 	elif [[ $iname == *ia* ]] 
 	then
 
