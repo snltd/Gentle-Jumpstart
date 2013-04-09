@@ -14,4 +14,7 @@ for a few years now, so they're pretty battle-hardened.
 Though this lacks some of the more advanced features of JET, I think it's a
 lot quicker to learn, and faster and simpler to use.
 
-Documentation is in the wiki.
+Documentation is in the wiki. 
+
+* [How to add new install images](https://github.com/snltd/jumpstart/wiki/Installing-install-images)
+* [How to set up an install client](https://github.com/snltd/jumpstart/wiki/Creating-Install-Clients)
