@@ -5,7 +5,7 @@
 # setup_client.sh
 # ---------------
 #
-# A wrapper to add_install_client. 
+# A wrapper to add_install_client.
 #
 # v1.0 Finally tidied up and commented. Prettier output, more robust, and
 #      about half the size it was. RDF
@@ -29,12 +29,12 @@
 #      check no longer works. RDF 17/10/11
 #
 # v2.3 Add packages though ADD_PKG variables. Different install clusters
-#      with -c. Better ZFS support. 
+#      with -c. Better ZFS support.
 #
 # v2.4 Added Solaris 2.5.1 supprt. No, I'm not joking. And it works. RDF
 #      03/09/2012.
 #
-# R Fisher 
+# R Fisher
 #
 #=============================================================================
 
@@ -55,6 +55,9 @@ JS_CLIENT_BASE="${JS_DIR}/clients"
 
 JS_IMG_BASE="${JS_DIR}/images"
 	# Where Solaris images go
+
+F_DIR="${JS_DIR}/finish_scripts"
+    # Where the finish scripts are
 
 ROOT_PASSWD='G929XW4UpVyxI'
 	# Encrypted root password that clients will be given.
@@ -116,11 +119,11 @@ usage()
 	where:
 	    -a  : set client architecture (is guessed otherwise)
 	    -c  : Solaris install cluster (default is $CLUSTER)
-	    -f  : list of finish scripts to run, comma separated. Can also 
+	    -f  : list of finish scripts to run, comma separated. Can also
 	          be "all" or "none". If not supplied, any existing finish
 	          script configuration for this client will be re-used
 	    -F  : install from the named flash archive. Argument should be
-	          supplied in ip_addr:/dir/file.flar form. Same OS should be 
+	          supplied in ip_addr:/dir/file.flar form. Same OS should be
 	          supplied in <directory> as is in archive
 	    -E  : force explicit partitioning for flash archive installation.
 	          Normally "existing" slices are used
@@ -133,7 +136,7 @@ usage()
 	    -s  : force creation of new client sysidcfg file
 	    -u  : set up "update" profile
 	    -V  : print version of program
- 
+
 	EOUSAGE
 	exit 2
 }
@@ -170,13 +173,13 @@ make_profile()
 	# $2 is the client config directory
 
 	typeset PROF="${2}/profile"
-	
+
 	# If we've been asked to do an update, it's VERY easy to create the
 	# profile. Note the early return. Sorry about that.
 
 	if [[ -n $FORCE_UPDATE ]]
 	then
-		
+
 		# If there's an existing profile and it looks like an install
 		# profile, keep it.
 
@@ -201,10 +204,10 @@ make_profile()
 			install_type    initial_install
 			system_type     standalone
 			cluster         $CLUSTER
-	
+
 		EOPROFILE
 	fi
-	
+
 	# If we're doing a flash install and -E hasn't been supplied, we want to
 	# use existing partitioning, so add that to the profile, and we're
 	# finished. Please excuse the mid-function exit.
@@ -304,7 +307,7 @@ make_sysidcfg()
 	# $2 is the client config directory
 
 	case $1 in
-	
+
 		Solaris_2.6)
 			cat <<-EOSYSIDCFG >$2/sysidcfg
 			system_locale=en_UK
@@ -329,7 +332,7 @@ make_sysidcfg()
 			EOSYSIDCFG
 			;;
 
-		Solaris_8) 
+		Solaris_8)
 			cat <<-EOSYSIDCFG >$2/sysidcfg
 				system_locale=en_GB
 				terminal=xterm
@@ -383,7 +386,7 @@ make_sysidcfg()
 			;;
 
 		Solaris_11)
-			
+
 			# Yes, I know you can't Jumpstart Solaris 11, but you could
 			# Jumpstart Solaris Nevada, which was the original (and best)
 			# 5.11.
@@ -466,14 +469,14 @@ make_finish()
 
 #-----------------------------------------------------------------------------
 # SCRIPT STARTS HERE
- 
+
 # Get options
 
 while getopts "a:c:Ef:F:m:npR:sS:T:uVz" option 2>/dev/null
 do
 
-	case $option in 
-		
+	case $option in
+
 		a)	ARCH=$OPTARG
 			;;
 
@@ -510,7 +513,7 @@ do
 
 		u)	FORCE_UPDATE=true
 			;;
-		
+
 		V)	print $MY_VER
 			exit 0
 			;;
@@ -571,7 +574,7 @@ print -n "      /etc/inet/hosts: "
 	&& print "ok [$CLIENT_IP]" \
 	|| { print "failed"; die "client not in /etc/inet/hosts"; }
 
-# Is the image directory valid? 
+# Is the image directory valid?
 
 [[ -d $IMG_DIR ]] \
 	|| die "no image directory $1"
@@ -646,7 +649,7 @@ done
 	|| die "this server has no default route on the client's network"
 
 # Everything looks good, so we can make a client config directory
- 
+
 mkdir -p $CONF_DIR \
 	|| die "can't create client config directory [$CONF_DIR]"
 
@@ -709,18 +712,18 @@ then
 	else
 
 		print "\nChecking finish scripts\n"
-	
-		print $FINISH_LIST | tr "," " " | while read fscr
+
+		print $FINISH_LIST | tr "," "\n" | while read fscr
 		do
 			TO_PRINT="$fscr"
 			print -n "$TO_PRINT : "
 
-			[[ -x $fscr ]] \
+			[[ -x "${F_DIR}/${fscr}" ]] \
 				&& print "ok" \
 				|| { print "does not exist"; die "missing finish script."; }
 
 		done
-	
+        print
 	fi
 
 fi
